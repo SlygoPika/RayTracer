@@ -1,11 +1,20 @@
 #include "Geometries.h"
 
-Geometries::Geometries(nlohmann::json& file)
+Geometries* Geometries::instancePtr = nullptr;
+
+Geometries::Geometries(const nlohmann::json& file)
 {
     parseGeometry(file);
+
+    instancePtr = this;
 }
 
-void Geometries::parseGeometry(nlohmann::json& file)
+Geometries* Geometries::getInstance()
+{
+    return instancePtr;
+}
+
+void Geometries::parseGeometry(const nlohmann::json& file)
 {
 	for (auto itr = file["geometry"].begin(); itr != file["geometry"].end(); itr++) {
         std::string type;
@@ -34,7 +43,9 @@ void Geometries::parseGeometry(nlohmann::json& file)
             }
         }
 
-        Eigen::Vector3f refl((*itr)["ka"].get<float>(), (*itr)["kd"].get<float>(), (*itr)["ks"].get<float>());
+        float ka = (*itr)["ka"].get<float>();
+        float kd = (*itr)["kd"].get<float>();
+        float ks = (*itr)["ks"].get<float>();
 
         float pc = (*itr)["pc"].get<float>();
 
@@ -51,7 +62,7 @@ void Geometries::parseGeometry(nlohmann::json& file)
 
             float radius = (*itr)["radius"].get<float>();
 
-            Sphere* newGeo = new Sphere(centre, radius, ac, dc, sc, refl, pc);
+            Sphere* newGeo = new Sphere(centre, radius, ac, dc, sc, ka, kd, ks, pc);
             geometries.push_back(newGeo);
         }
         else if (type == "rectangle")
@@ -71,14 +82,14 @@ void Geometries::parseGeometry(nlohmann::json& file)
                 v.push_back(point);
             }
             
-            Rectangle* newGeo = new Rectangle(v[0], v[1], v[2], v[3], ac, dc, sc, refl, pc);
+            Rectangle* newGeo = new Rectangle(v[0], v[1], v[2], v[3], ac, dc, sc, ka, kd, ks, pc);
             geometries.push_back(newGeo);
         }
 
 	}
 }
 
-void Geometries::prettyPrint()
+void Geometries::prettyPrint() const
 {
     int len = geometries.size();
     for (int i = 0; i < len; i++)

@@ -1,8 +1,9 @@
 #include "Camera.h"
 #define M_PI           3.14159265358979323846
 
+Camera* Camera::instancePtr = nullptr;
 
-Camera::Camera(nlohmann::json& file)
+Camera::Camera(const nlohmann::json& file)
 {
     parseCamera(file);
 
@@ -11,27 +12,47 @@ Camera::Camera(nlohmann::json& file)
     side = up.cross(lookat);
 
     tanVal = (float) tan(fov * M_PI / 360.0);
-    nearPlaneEdge = tanVal * nearPlane;
+    nearPlaneYEdge = tanVal * NEAR_PLANE;
+    nearPlaneXEdge = nearPlaneYEdge * viewport.x / viewport.y;
 
-    deltaXPixel = 2 * tanVal * nearPlane / viewport.x;
-    deltaYPixel = 2 * tanVal * nearPlane / viewport.y;
-    halfDeltaXPixel = deltaXPixel / 2;
-    halfDeltaYPixel = deltaYPixel / 2;
+    deltaPixel = 2 * tanVal * NEAR_PLANE / viewport.y;
+    halfDeltaPixel = deltaPixel / 2;
 
     setupRays();
+
+    instancePtr = this;
 }
 
-Eigen::Vector3f Camera::emitRay(int& pixelX, int& pixelY, std::vector<Geometry*>& geometries)
+Eigen::Vector3f Camera::emitRay(const int& pixelX, const int& pixelY) const
 {
     Ray ray = viewport.pixelRays[pixelY][pixelX];
-    //ray.prettyPrint(pixelX, pixelY);
 
-    for (auto i = geometries.begin(); i < geometries.end(); i++)
+    std::vector<Geometry*>& geometries = Geometries::getInstance()->geometries;
+
+    float minIntersect = FAR_PLANE;
+    Geometry* geoToRender;
+
+    // Test which geometry(ies) intersect with the ray
+    for (auto geoItr = geometries.begin(); geoItr < geometries.end(); geoItr++)
     {
-        if ((*i)->intersects(ray))
+        float intersect;
+        if ((*geoItr)->intersects(ray, intersect))
         {
-            return (*i)->ambiantColor;
+            if (intersect < minIntersect)
+            {
+                minIntersect = intersect;
+                geoToRender = *geoItr;
+            }
         }
+    }
+
+    // If an intersect was found, fetch color of object hit
+    if (minIntersect < FAR_PLANE)
+    {
+        Eigen::Vector3f point = minIntersect * ray.direction + ray.origin;
+        Eigen::Vector3f color = geoToRender->computeLighting(point);
+        clampColor(color);
+        return color;
     }
 
     return backgroundColor;
@@ -53,12 +74,12 @@ void Camera::setupRays()
     }
 }
 
-void Camera::appendRay(int x, int y, std::vector<Ray>& row)
+void Camera::appendRay(const int& x, const int& y, std::vector<Ray>& row) const
 {
-    float upMagnifier = nearPlaneEdge - (y * deltaYPixel) - halfDeltaYPixel;
-    float sideMagnifier = nearPlaneEdge - (x * deltaXPixel) - halfDeltaXPixel;
+    float upMagnifier = nearPlaneYEdge - (y * deltaPixel) - halfDeltaPixel;
+    float sideMagnifier = nearPlaneXEdge - (x * deltaPixel) - halfDeltaPixel;
 
-    Eigen::Vector3f direction = nearPlane * lookat + up * upMagnifier + side * sideMagnifier;
+    Eigen::Vector3f direction = NEAR_PLANE * lookat + up * upMagnifier + side * sideMagnifier;
     direction.normalize();
 
     Ray ray(position, direction);
@@ -66,7 +87,29 @@ void Camera::appendRay(int x, int y, std::vector<Ray>& row)
     row.push_back(ray);
 }
 
-void Camera::parseCamera(nlohmann::json& file)
+void Camera::clampColor(Eigen::Vector3f& color) const
+{
+    color[0] = std::min(color[0], 1.0f);
+    color[1] = std::min(color[1], 1.0f);
+    color[2] = std::min(color[2], 1.0f);
+}
+
+Camera* Camera::getInstance()
+{
+    return instancePtr;
+}
+
+const Viewport& Camera::getViewport() const
+{
+    return viewport;
+}
+
+const Eigen::Vector3f& Camera::getPosition() const
+{
+    return position;
+}
+
+void Camera::parseCamera(const nlohmann::json& file)
 {
     for (auto itr = file["output"].begin(); itr != file["output"].end(); itr++) {
         int i = 0;
@@ -104,7 +147,7 @@ void Camera::parseCamera(nlohmann::json& file)
     }
 }
 
-void Camera::prettyPrint()
+void Camera::prettyPrint() const
 {
     std::cout << "Camera:" << std::endl;
     std::cout << "FOV: " << fov <<std::endl;

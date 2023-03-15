@@ -2,16 +2,24 @@
 
 Geometry::Geometry() {}
 
-Geometry::Geometry(Eigen::Vector3f& ambiantColor, Eigen::Vector3f& diffuseColor, 
-	Eigen::Vector3f& specularColor, Eigen::Vector3f& reflectionCoefficients, float pc)
-	:ambiantColor(ambiantColor), diffuseColor(diffuseColor), specularColor(specularColor), reflectionCoefficients(reflectionCoefficients), pc(pc) {}
+Geometry::Geometry(const Eigen::Vector3f& ambiantColor, const Eigen::Vector3f& diffuseColor,
+	const Eigen::Vector3f& specularColor, const float& ka, const float& kd, const float& ks, const float& pc)
+	:ambiantColor(ambiantColor), diffuseColor(diffuseColor), specularColor(specularColor), 
+	ambiantColorFinal(ambiantColor * ka), reflectionCoefficients{ka, kd, ks}, pc(pc) 
+{}
 
-void Geometry::prettyPrint() {
+void Geometry::prettyPrint() const {
 	std::cout << "Virtual function has failed" << std::endl;
 }
 
-bool Geometry::intersects(Ray& ray)
+bool Geometry::intersects(const Ray& ray, float& z) const
 {
 	std::cout << "Virtual function has failed" << std::endl;
 	return false;
+}
+
+Eigen::Vector3f Geometry::computeLighting(const Eigen::Vector3f& point) const
+{
+	std::cout << "Virtual function has failed" << std::endl;
+	return Eigen::Vector3f(0,0,0);
 }

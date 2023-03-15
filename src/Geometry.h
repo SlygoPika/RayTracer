@@ -10,25 +10,37 @@
 #include "../external/simpleppm.h"
 #include "Ray.h"
 
+struct LightCoefficients
+{
+	float ambiant;
+	float diffuse;
+	float specular;
+};
+
 class Geometry
 {
 protected:
-	Geometry();
-	Geometry(Eigen::Vector3f& ambiantColor, Eigen::Vector3f& diffuseColor, 
-		Eigen::Vector3f& specularColor, Eigen::Vector3f& reflectionCoefficients, float pc);
-
-
-public:
 	Eigen::Vector3f ambiantColor;
 	Eigen::Vector3f diffuseColor;
 	Eigen::Vector3f specularColor;
 
-	Eigen::Vector3f reflectionCoefficients;
+	Eigen::Vector3f ambiantColorFinal;
+
+	LightCoefficients reflectionCoefficients;
 
 	float pc;
 
-	virtual void prettyPrint();
-	virtual bool intersects(Ray& ray);
+	Geometry();
+	Geometry(const Eigen::Vector3f& ambiantColor, const Eigen::Vector3f& diffuseColor,
+		const Eigen::Vector3f& specularColor, const float& ka, const float& kd, const float& ks, const float& pc);
+
+public:
+
+	virtual void prettyPrint() const;
+
+	virtual bool intersects(const Ray& ray, float& z) const;
+
+	virtual Eigen::Vector3f computeLighting(const Eigen::Vector3f& point) const;
 };
 
 #endif

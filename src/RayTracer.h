@@ -9,6 +9,7 @@
 #include "../external/simpleppm.h"
 
 #include "Geometries.h"
+#include "Lights.h"
 #include "Camera.h"
 
 class RayTracer
@@ -18,15 +19,19 @@ private:
 	std::string outputFile;
 
 	nlohmann::json file;
+
+	// Scene data
 	Geometries geometries;
+	Lights lights;
 	Camera cam;
 
-	void outputPPM();
+	void outputPPM() const;
 	void fillBuffer();
+	void deleteSceneData();
 
 public:
 
-	RayTracer(nlohmann::json file);
+	RayTracer(const nlohmann::json& file);
 
 	void run();
 };

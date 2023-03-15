@@ -13,6 +13,7 @@
 
 #include "Ray.h"
 #include "Geometries.h"
+#include "Lights.h"
 
 struct Viewport
 {
@@ -25,21 +26,11 @@ struct Viewport
 class Camera
 {
 private:
-	float tanVal;
-	float deltaXPixel;
-	float deltaYPixel;
-	float halfDeltaXPixel;
-	float halfDeltaYPixel;
+	const float NEAR_PLANE = 0.1f;
+	const float FAR_PLANE = 2000.0f;
 
-	float nearPlaneEdge;
-	float nearPlane = 0.1f;
-	float farPlane = 100.0f;
+	static Camera* instancePtr;
 
-	void parseCamera(nlohmann::json& file);
-	void setupRays();
-	void appendRay(int x, int y, std::vector<Ray>& row);
-
-public:
 	Viewport viewport;
 
 	// Coordinate vectors
@@ -51,9 +42,33 @@ public:
 	Eigen::Vector3f position;
 	float fov;
 
-	Camera(nlohmann::json& file);
-	Eigen::Vector3f emitRay(int& pixelX, int& pixelY, std::vector<Geometry*>& geometries);
-	void prettyPrint();
+	// Math constants
+	float tanVal;
+	float deltaPixel;
+	float halfDeltaPixel;
+
+	float nearPlaneXEdge;
+	float nearPlaneYEdge;
+
+	void parseCamera(const nlohmann::json& file);
+	void setupRays();
+	void appendRay(const int& x, const int& y, std::vector<Ray>& row) const;
+	void clampColor(Eigen::Vector3f& color) const;
+
+public:
+
+	Camera(const nlohmann::json& file);
+
+	Camera(const Camera& obj) = delete;
+
+	Eigen::Vector3f emitRay(const int& pixelX, const int& pixelY) const;
+
+	const Viewport& getViewport() const;
+	const Eigen::Vector3f& getPosition() const;
+
+	static Camera* getInstance();
+
+	void prettyPrint() const;
 };
 
 #endif

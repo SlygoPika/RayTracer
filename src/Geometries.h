@@ -6,23 +6,27 @@
 #include <vector>
 
 #include "../external/json.hpp"
-#include "../external/simpleppm.h"
 
 #include "Geometry.h"
 #include "Sphere.h"
 #include "Rectangle.h"
 
-
 class Geometries
 {
 private:
-	void parseGeometry(nlohmann::json& file);
+	static Geometries* instancePtr;
+	void parseGeometry(const nlohmann::json& file);
 
 public:
 	std::vector<Geometry*> geometries;
 
-	Geometries(nlohmann::json& file);
-	void prettyPrint();
+	Geometries(const nlohmann::json& file);
+
+	Geometries(const Geometries& obj) = delete;
+
+	static Geometries* getInstance();
+
+	void prettyPrint() const;
 };
 
 #endif

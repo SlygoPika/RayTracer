@@ -12,9 +12,9 @@ public:
 	Eigen::Vector3f origin;
 	Eigen::Vector3f direction;
 
-	Ray(Eigen::Vector3f& origin, Eigen::Vector3f& direction);
-	void prettyPrint();
-	void prettyPrint(int x, int y);
+	Ray(const Eigen::Vector3f& origin, const Eigen::Vector3f& direction);
+	void prettyPrint() const;
+	void prettyPrint(const int& x, const int& y) const;
 };
 
 #endif
